@@ -1,0 +1,3 @@
+*.sh
+*.lst
+parse_logs_elb
