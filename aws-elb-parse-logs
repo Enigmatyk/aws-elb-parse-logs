@@ -1,0 +1,59 @@
+#!/bin/bash
+# ------------ DEMO PROPOSE ONLY -----------
+#It's a very small script to parse big logs from AWS ELB
+
+#Variables
+RANDOM=$(((RANDOM % 10000)+1))
+Y=''
+DATE=`date +%Y%m%d`
+#Set a temporary dir (example NFS)
+TMPDIR=/tmp/
+LOGFILE=${TMPDIR}`basename "$0"`-${RANDOM}-${DATE}.log
+
+#Basic function to check if file provided exist
+function usage()
+{
+	echo "Usage: $0 filename"
+	exit 1
+}
+
+function check_if_exist()
+{
+	local file="$1"
+	[[ -f "$file" ]] && return 0 || return 1
+}
+
+if ( check_if_exist "$1" );then
+	echo "file exist" > /dev/null
+else
+	echo "file not found"
+	usage
+fi
+
+#If the user press control+c will terminate the script and remove the logfile
+ctrl_c()
+{
+  echo -en "\nTerminated by user, removing the file $LOGFILE \n"
+  rm -f $LOGFILE
+  exit $?
+}
+
+trap ctrl_c SIGINT
+
+#Processing the temporary file, using regex here will consume much more CPU/IO in big files
+#It's a diferent approach, we can use the same logs to compare or using for IDS/IPS/Firewall as a source list
+while read -r line
+do 
+  echo $line | awk '{print $3 " " $13}' >> ${LOGFILE}
+done < "$1"
+unset line
+
+#Parsing, count, sort and give us the top5
+Y=`cat ${LOGFILE} | sed '/^$/d' | sed 's/\?.*//g' | sed 's/\:[0-9]*//' | sort | uniq | sort -nr | head -5`
+
+echo -e ""
+echo -e "============  TOP RESOURCES BY COUNTRY ============"
+echo -e ""
+echo -e "$Y" | awk '{print $2 "\n" system("geoiplookup " $1)}' | sed '/^$/d' | sed 's/^.*\(user.*\).*$/\1/' | cut -d\, -f2 | cut -d0 -f1
+echo -e "==================  ==================="
+exit 0
