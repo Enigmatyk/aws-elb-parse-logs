@@ -10,3 +10,5 @@ dnf install geoip
 - Debian/Ubuntu
 apt install geoip
 
+- How to run it
+./aws-elb-parse-logs logfile.log
