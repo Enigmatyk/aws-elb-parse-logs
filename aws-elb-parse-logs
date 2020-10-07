@@ -1,4 +1,5 @@
 #!/bin/bash
+# enigmatyk 2010
 # ------------ For Demonstration Purposes Only -----------
 #It's a very small script to parse big logs from AWS ELB
 
